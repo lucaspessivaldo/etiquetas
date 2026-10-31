@@ -28,8 +28,8 @@ O programa é um pacote `.deb`, instalado pelo `apt` como qualquer outro.
 **1. Gerar o pacote** (precisa do [Bun](https://bun.sh)):
 
 ```bash
-git clone https://github.com/lucaspessivaldo/etiquetas-zpl.git
-cd etiquetas-zpl
+git clone https://github.com/lucaspessivaldo/etiquetas.git
+cd etiquetas
 bun install
 bun run dist
 ```

@@ -76,9 +76,9 @@
     "vite": "5",
     "wait-on": "8"
   },
-  "homepage": "https://github.com/lucaspessivaldo/etiquetas-zpl",
+  "homepage": "https://github.com/lucaspessivaldo/etiquetas",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lucaspessivaldo/etiquetas-zpl.git"
+    "url": "https://github.com/lucaspessivaldo/etiquetas.git"
   }
 }
