@@ -1,0 +1,84 @@
+{
+  "name": "etiquetas-zpl",
+  "productName": "Etiquetas ZPL",
+  "version": "1.0.0",
+  "description": "Converte etiquetas ZPL (Shopee, Mercado Livre) em PDF e imprime direto em impressoras térmicas TSPL.",
+  "author": {
+    "name": "Lucas",
+    "email": "lucaspessivaldo@gmail.com"
+  },
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "concurrently -k -n vite,electron \"vite\" \"wait-on tcp:5173 && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .\"",
+    "build": "vite build",
+    "start": "vite build && electron .",
+    "dist": "vite build && electron-builder --linux deb"
+  },
+  "trustedDependencies": [
+    "electron"
+  ],
+  "build": {
+    "appId": "br.lucas.etiquetaszpl",
+    "productName": "Etiquetas ZPL",
+    "files": [
+      "dist/**",
+      "electron/**"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "linux": {
+      "target": [
+        "deb"
+      ],
+      "category": "Office",
+      "icon": "build/icon.png",
+      "executableName": "etiquetas-zpl",
+      "synopsis": "Etiquetas ZPL em PDF e impressão direta na térmica"
+    },
+    "artifactName": "${name}_${version}_${arch}.${ext}",
+    "deb": {
+      "afterInstall": "build/deb/after-install.sh",
+      "afterRemove": "build/deb/after-remove.sh",
+      "depends": [
+        "libgtk-3-0",
+        "libnotify4",
+        "libnss3",
+        "libxss1",
+        "libxtst6",
+        "xdg-utils",
+        "libatspi2.0-0",
+        "libuuid1",
+        "libsecret-1-0",
+        "cups-client"
+      ],
+      "packageCategory": "utils",
+      "priority": "optional"
+    }
+  },
+  "dependencies": {
+    "bwip-js": "4",
+    "jspdf": "2",
+    "jszip": "3",
+    "pako": "2",
+    "react": "18",
+    "react-dom": "18"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "4",
+    "concurrently": "9",
+    "cross-env": "7",
+    "electron": "33",
+    "electron-builder": "25",
+    "vite": "5",
+    "wait-on": "8"
+  },
+  "homepage": "https://github.com/lucaspessivaldo/etiquetas-zpl",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lucaspessivaldo/etiquetas-zpl.git"
+  }
+}
