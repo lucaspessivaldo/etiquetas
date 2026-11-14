@@ -9,6 +9,15 @@ ZPL, que é a linguagem das impressoras Zebra). O programa faz o papel do
 [Labelary](https://labelary.com/viewer.html), só que no seu computador: nenhuma
 etiqueta é enviada para a internet.
 
+## Versão web (só PDF)
+
+Para só gerar o PDF, sem instalar nada, use pelo navegador:
+**https://lucaspessivaldo.github.io/etiquetas/**
+
+Abra ou arraste o arquivo da Shopee, confira a prévia e clique em **Baixar PDF**. As
+etiquetas são lidas só no seu navegador, nada é enviado para a internet. A impressão
+direta na térmica só existe no programa para Linux.
+
 ## Para qual impressora
 
 Testado na **Knup KP-IM604** (USB, 203 dpi, etiquetas de 100 × 150 mm) no

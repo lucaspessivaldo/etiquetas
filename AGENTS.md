@@ -166,3 +166,19 @@ endereço e CPF/telefone de clientes.
   `~/.config/Etiquetas ZPL`.
 - `<dialog>`: o evento `close` não disparou de forma confiável nos testes; o componente
   `Dialog` controla abrir/fechar pelo estado do React e os formulários usam `onSubmit`.
+
+## Versão web (GitHub Pages)
+
+- `.github/workflows/pages.yml` roda `bun run build` e publica o `dist/` em
+  https://lucaspessivaldo.github.io/etiquetas/ a cada push no `main`. Em pull request
+  ele só confere o build.
+- É a mesma interface sem o Electron: `window.thermal` não existe, a seção da térmica
+  mostra "Disponível no aplicativo para Linux" e **Imprimir** abre o diálogo do
+  navegador. Todo uso de `window.thermal` precisa continuar testando se ele existe.
+- `base: './'` no `vite.config.js` faz os caminhos funcionarem tanto no Electron
+  (arquivo local) quanto no subcaminho `/etiquetas/` do Pages. Não troque por `'/'`.
+- O site também não pode fazer requisições de rede: as etiquetas têm dados de clientes
+  e só podem ser lidas no navegador de quem usa.
+- No CI, `ELECTRON_SKIP_BINARY_DOWNLOAD=1` evita baixar o Electron, que o site não usa.
+- Para testar como no Pages: `bun run build` e `bunx vite preview --base /etiquetas/`,
+  abrindo `http://localhost:4173/etiquetas/`.
