@@ -77,7 +77,8 @@ quiser limpar tudo.
 
 1. Ligue a impressora no USB.
 2. Abra **Etiquetas ZPL** e arraste o arquivo da Shopee para a janela
-   (`.zip`, `.txt` ou `.zpl`, do jeito que a Shopee baixa).
+   (`.zip`, `.txt` ou `.zpl`, do jeito que a Shopee baixa), ou cole o código ZPL na
+   caixa **Colar código ZPL** da tela inicial e clique em **Converter**.
 3. Confira a prévia e clique em **Imprimir**. As etiquetas vão direto para a térmica.
    **Baixar PDF** gera um PDF com uma etiqueta por página.
 

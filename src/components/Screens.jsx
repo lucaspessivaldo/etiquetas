@@ -2,11 +2,17 @@ import { useRef } from 'react';
 import { Icon } from './Icons.jsx';
 import { PAPER_SIZES } from '../engine/labels.js';
 
-export function StartScreen({ onFiles, onPaste, onSample }) {
+// Tela inicial: abrir arquivo ou colar o código direto, lado a lado.
+export function StartScreen({ onFiles, draft, onDraft, onConvert, onSample }) {
   const input = useRef(null);
+  const ready = !!draft.trim();
   return (
     <section className="start">
-      <div className="drop" onClick={() => input.current.click()}>
+      <header className="start-head">
+        <p className="eyebrow">Shopee · Mercado Livre · Zebra</p>
+        <h1>Etiquetas ZPL em PDF</h1>
+      </header>
+      <div className="start-grid">
         <input
           ref={input}
           type="file"
@@ -15,24 +21,40 @@ export function StartScreen({ onFiles, onPaste, onSample }) {
           accept=".txt,.zpl,.prn,.zip,text/plain,application/zip"
           onChange={(e) => { if (e.target.files.length) onFiles([...e.target.files]); e.target.value = ''; }}
         />
-        <span className="drop-icon"><Icon name="upload" /></span>
-        <h1>Converta etiquetas ZPL em PDF</h1>
-        <p>Arraste aqui o arquivo da Shopee ou do Mercado Livre</p>
-        <button
-          type="button"
-          className="btn primary"
-          onClick={(e) => { e.stopPropagation(); input.current.click(); }}
-        >
-          Escolher arquivo
+        <button type="button" className="drop" onClick={() => input.current.click()}>
+          <span className="drop-icon"><Icon name="upload" /></span>
+          <span className="drop-title">Abrir arquivo</span>
+          <span className="drop-text">Arraste aqui ou clique para escolher o arquivo da Shopee ou do Mercado Livre.</span>
+          <span className="drop-foot">
+            <small>.zip, .txt ou .zpl</small>
+            <Icon name="arrow" />
+          </span>
         </button>
-        <small>.zip, .txt ou .zpl</small>
+        <form className="paste" onSubmit={(e) => { e.preventDefault(); if (ready) onConvert(); }}>
+          <label htmlFor="zpl-code">Colar código ZPL</label>
+          <textarea
+            id="zpl-code"
+            spellCheck={false}
+            value={draft}
+            onChange={(e) => onDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && ready) { e.preventDefault(); onConvert(); }
+            }}
+            placeholder={'^XA\n^FO50,50^A0N,40,40^FDOlá mundo^FS\n^XZ'}
+          />
+          <div className="paste-foot">
+            <small>Ctrl + Enter também converte</small>
+            <button type="submit" className="btn primary" disabled={!ready}>
+              Converter <Icon name="arrow" />
+            </button>
+          </div>
+        </form>
       </div>
-      <div className="alt">
-        <button type="button" className="link" onClick={onPaste}>Colar código ZPL</button>
+      <p className="note">
+        <button type="button" className="link" onClick={onSample}>Ver um exemplo</button>
         <span aria-hidden="true">·</span>
-        <button type="button" className="link" onClick={onSample}>Ver exemplo</button>
-      </div>
-      <p className="note">Tudo acontece no seu computador. Nenhum arquivo é enviado.</p>
+        Tudo acontece no seu computador. Nenhum arquivo é enviado.
+      </p>
     </section>
   );
 }

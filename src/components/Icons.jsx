@@ -3,6 +3,7 @@ const paths = {
   upload: 'M12 15V3m0 0-4 4m4-4 4 4M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4',
   download: 'M12 4v12m0 0-4-4m4 4 4-4M4 20h16',
   close: 'M18 6 6 18M6 6l12 12',
+  arrow: 'M5 12h14m-6-6 6 6-6 6',
 };
 
 export function Icon({ name }) {

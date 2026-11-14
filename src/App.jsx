@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon } from './components/Icons.jsx';
 import { StartScreen, Toolbar, Preview } from './components/Screens.jsx';
 import { SettingsDrawer } from './components/SettingsDrawer.jsx';
-import { PasteDialog } from './components/PasteDialog.jsx';
 import { QueueDialog } from './components/QueueDialog.jsx';
 import { renderPages } from './engine/labels.js';
 import { readFiles, buildPdf, pdfFileName, printWithDialog } from './engine/output.js';
@@ -65,7 +64,8 @@ export default function App() {
   const [result, setResult] = useState({ pages: [], warnings: [] });
   const [rendering, setRendering] = useState(false);
   const [busy, setBusy] = useState(null); // 'print' | 'pdf' | 'calibrate'
-  const [panel, setPanel] = useState(null); // 'settings' | 'paste'
+  const [panel, setPanel] = useState(null); // 'settings'
+  const [draft, setDraft] = useState(''); // código colado na tela inicial; fica ao voltar
   const [queue, setQueue] = useState(null); // fila da térmica ocupada ou pausada
   const [dragging, setDragging] = useState(false);
 
@@ -186,7 +186,9 @@ export default function App() {
         {!hasDoc ? (
           <StartScreen
             onFiles={openFiles}
-            onPaste={() => setPanel('paste')}
+            draft={draft}
+            onDraft={setDraft}
+            onConvert={() => setDoc({ text: draft, name: 'Código colado' })}
             onSample={() => setDoc({ text: SAMPLE, name: 'Etiqueta de exemplo' })}
           />
         ) : (
@@ -218,11 +220,6 @@ export default function App() {
         hasPages={pages.length > 0}
         onCalibrate={calibrate}
         onSystemPrint={() => { setPanel(null); printWithDialog(pages); }}
-      />
-      <PasteDialog
-        open={panel === 'paste'}
-        onClose={() => setPanel(null)}
-        onSubmit={(text) => setDoc({ text, name: 'Código colado' })}
       />
       <QueueDialog
         queue={queue}

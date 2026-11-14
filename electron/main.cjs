@@ -9,7 +9,7 @@ function createWindow() {
     minWidth: 420,
     minHeight: 560,
     title: 'Etiquetas ZPL',
-    backgroundColor: '#fafaf9',
+    backgroundColor: '#ffffff',
     autoHideMenuBar: true,
     icon: path.join(__dirname, '..', 'build', 'icon.png'),
     webPreferences: {

@@ -40,15 +40,16 @@ electron/preload.cjs     expõe SÓ window.thermal.{list, print, queue, clear} (
 electron/printer.cjs     acha a impressora, envia bytes crus (lp -o raw ou /dev/usb/lp*),
                          lê e limpa a fila do CUPS
 src/main.jsx, App.jsx    estado da tela, arrastar arquivo, imprimir, PDF, toasts
-src/components/          StartScreen/Toolbar/Preview (Screens.jsx), SettingsDrawer,
-                         PasteDialog, QueueDialog (fila ocupada/pausada),
+src/components/          StartScreen (abrir arquivo + caixa de colar ZPL)/Toolbar/Preview
+                         (Screens.jsx), SettingsDrawer, QueueDialog (fila ocupada/pausada),
                          Dialog (<dialog> controlado), Icons
 src/engine/zpl.js        MOTOR ZPL: tokenizer, parser, renderer (o arquivo mais delicado)
 src/engine/labels.js     ZPL -> páginas finais: tamanho do papel, girar, encaixar, cópias
 src/engine/tspl.js       páginas -> bytes TSPL (BITMAP 1 bit, 203 dpi)
 src/engine/output.js     ler .zip/.txt, gerar PDF, imprimir pelo diálogo do sistema
 src/engine/sample.js     etiqueta de exemplo (dados fictícios)
-src/styles/              app.css (tema claro/escuro por prefers-color-scheme), fonts.css
+src/styles/              app.css (tema no estilo do chessOp, claro/escuro por
+                         prefers-color-scheme), fonts.css (fontes do motor ZPL)
 build/icon.png           ícone
 build/deb/*.sh           scripts pós-instalação/remoção do .deb (ver "Sandbox")
 exemplos/                etiqueta-exemplo.zpl (fictícia)
@@ -177,6 +178,18 @@ endereço e CPF/telefone de clientes.
 - Tudo é local; o app não faz requisições de rede.
 - Arquivos reais da Shopee contêm dados pessoais de clientes: **não versionar**, não
   colocar em `exemplos/`, não enviar para serviços externos. Use dados fictícios.
+
+## Visual
+
+- Mesmo estilo do outro projeto do usuário, o **chessOp** (`~/codes/chessOp`,
+  `src/index.css`): preto puro no branco e o inverso no escuro, cantos de 2 px, títulos
+  em **Anton** maiúsculo, texto em **Inter**, código em **JetBrains Mono**, verde só na
+  ação principal (`.btn.primary`). As cores são os mesmos `oklch` de lá.
+- As fontes da interface vêm dos pacotes `@fontsource` (importados em `main.jsx`) e são
+  empacotadas pelo Vite. **Não use Google Fonts**: o app não pode fazer requisições de
+  rede e o CSP do `index.html` só permite fontes locais.
+- Anton tem `line-height` .95: em elemento com `overflow: hidden` o acento de maiúsculas
+  ("CÓDIGO") é cortado; nesses casos aumente o `line-height`.
 
 ## Convenções
 
