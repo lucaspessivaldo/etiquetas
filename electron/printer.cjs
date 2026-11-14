@@ -10,9 +10,21 @@ const { execFile, spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+// Saída do CUPS sempre em inglês: os textos lidos abaixo mudam com o idioma do sistema.
+const ENV = { ...process.env, LC_ALL: 'C' };
+
 function run(cmd, args) {
   return new Promise((resolve) => {
-    execFile(cmd, args, { timeout: 5000 }, (err, stdout) => resolve(err ? '' : stdout));
+    execFile(cmd, args, { timeout: 5000, env: ENV }, (err, stdout) => resolve(err ? '' : stdout));
+  });
+}
+
+function runOrFail(cmd, args) {
+  return new Promise((resolve, reject) => {
+    execFile(cmd, args, { timeout: 10000, env: ENV }, (err, _out, stderr) => {
+      if (err) reject(new Error(String(stderr).trim() || err.message));
+      else resolve();
+    });
   });
 }
 
@@ -64,4 +76,34 @@ function print(id, data, title) {
   });
 }
 
-module.exports = { list, print };
+/*
+ * Estado da fila do CUPS antes de imprimir. O Ubuntu, ao ligar a impressora,
+ * pode deixar na fila um trabalho "Automatic configuration" do driver errado,
+ * e o CUPS pausa a fila se ela for desligada no meio de uma impressão. Nos dois
+ * casos as etiquetas ficariam esperando sem aviso.
+ * O nome da fila costuma começar com "-" (ex.: "-9X10"), por isso vai grudado
+ * na opção (-P-9X10, -p-9X10): separado, os comandos o leem como opção.
+ */
+async function queue(id) {
+  if (!id.startsWith('cups:')) return { paused: false, jobs: [] };
+  const name = id.slice(5);
+  const [state, lpq] = await Promise.all([run('lpstat', ['-p' + name]), run('lpq', ['-P' + name])]);
+  const jobs = [];
+  for (const line of lpq.split('\n')) {
+    // "1st     lucas   5       Documento                       1024 bytes"
+    const m = line.match(/^\S+\s+\S+\s+(\d+)\s+(.*?)\s+\d+ bytes$/);
+    if (m) jobs.push({ id: Number(m[1]), title: m[2] });
+  }
+  return { paused: / disabled /.test(state), jobs };
+}
+
+// Cancela o que está na fila e reativa a fila pausada (o usuário está no grupo lpadmin).
+async function clear(id) {
+  if (!id.startsWith('cups:')) return { ok: true };
+  const q = await queue(id);
+  if (q.jobs.length) await runOrFail('cancel', q.jobs.map((j) => String(j.id)));
+  if (q.paused) await runOrFail('lpadmin', ['-p', id.slice(5), '-E']);
+  return { ok: true };
+}
+
+module.exports = { list, print, queue, clear };

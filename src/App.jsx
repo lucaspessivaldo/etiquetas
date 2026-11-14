@@ -3,6 +3,7 @@ import { Icon } from './components/Icons.jsx';
 import { StartScreen, Toolbar, Preview } from './components/Screens.jsx';
 import { SettingsDrawer } from './components/SettingsDrawer.jsx';
 import { PasteDialog } from './components/PasteDialog.jsx';
+import { QueueDialog } from './components/QueueDialog.jsx';
 import { renderPages } from './engine/labels.js';
 import { readFiles, buildPdf, pdfFileName, printWithDialog } from './engine/output.js';
 import { buildTspl, CALIBRATE } from './engine/tspl.js';
@@ -65,6 +66,7 @@ export default function App() {
   const [rendering, setRendering] = useState(false);
   const [busy, setBusy] = useState(null); // 'print' | 'pdf' | 'calibrate'
   const [panel, setPanel] = useState(null); // 'settings' | 'paste'
+  const [queue, setQueue] = useState(null); // fila da térmica ocupada ou pausada
   const [dragging, setDragging] = useState(false);
 
   const thermal = printers && printers.length ? printers[0] : null;
@@ -117,10 +119,18 @@ export default function App() {
   }, [openFiles]);
   useEffect(() => { document.body.classList.toggle('dragging', dragging); }, [dragging]);
 
-  async function print() {
+  // mode: 'clear' limpa a fila antes; 'force' imprime atrás do que já estiver nela.
+  async function print(mode) {
     if (!thermal) { printWithDialog(pages); return; }
+    setQueue(null);
     setBusy('print');
     try {
+      if (mode === 'clear') {
+        await window.thermal.clear(thermal.id);
+      } else if (mode !== 'force') {
+        const q = await window.thermal.queue(thermal.id);
+        if (q.paused || q.jobs.length) { setQueue(q); return; }
+      }
       await new Promise((r) => setTimeout(r, 30)); // deixa o botão mostrar "Enviando…"
       const data = buildTspl(pages, { density: parseInt(settings.density, 10) });
       await window.thermal.print(thermal.id, data, doc.name);
@@ -189,7 +199,7 @@ export default function App() {
               settings={settings}
               set={set}
               thermal={thermal}
-              onPrint={print}
+              onPrint={() => print()}
               onPdf={downloadPdf}
               onClose={() => setDoc({ text: '', name: '' })}
             />
@@ -213,6 +223,12 @@ export default function App() {
         open={panel === 'paste'}
         onClose={() => setPanel(null)}
         onSubmit={(text) => setDoc({ text, name: 'Código colado' })}
+      />
+      <QueueDialog
+        queue={queue}
+        onClose={() => setQueue(null)}
+        onClear={() => print('clear')}
+        onPrint={() => print('force')}
       />
 
       {toast && <div className={'toast' + (toast.error ? ' error' : '')} role="status">{toast.text}</div>}

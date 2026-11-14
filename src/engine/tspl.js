@@ -45,7 +45,9 @@ function bitmap(canvas, wmm, hmm) {
  */
 export function buildTspl(pages, opts) {
   const o = { density: 8, speed: 4, gap: 2, direction: 1, ...opts };
-  const parts = [];
+  // O CRLF inicial fecha algum comando pela metade deixado por outro trabalho
+  // (ex.: o PostScript do driver errado do CUPS); senão ele engole o SIZE.
+  const parts = [ascii('\r\n')];
   let size = '';
   for (const p of pages) {
     const s = 'SIZE ' + p.wmm + ' mm,' + p.hmm + ' mm\r\n';

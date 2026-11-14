@@ -32,6 +32,8 @@ function createWindow() {
 
 ipcMain.handle('thermal:list', () => printer.list());
 ipcMain.handle('thermal:print', (_e, { id, data, title }) => printer.print(id, data, title));
+ipcMain.handle('thermal:queue', (_e, id) => printer.queue(id));
+ipcMain.handle('thermal:clear', (_e, id) => printer.clear(id));
 
 app.whenReady().then(() => {
   createWindow();

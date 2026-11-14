@@ -235,6 +235,11 @@ dialog h2 { margin: 0; font-size: 17px; font-weight: 650; }
   background: var(--bg); color: var(--ink);
 }
 .modal footer { display: flex; justify-content: flex-end; gap: 8px; }
+.queue { width: min(480px, calc(100vw - 32px)); }
+.queue p { margin: 0; font-size: 14px; line-height: 1.5; }
+.queue ul { margin: 8px 0 10px; padding-left: 20px; font-size: 13.5px; line-height: 1.6; overflow-wrap: anywhere; }
+.queue .hint { color: var(--muted); font-size: 12.5px; line-height: 1.4; }
+.queue footer { flex-wrap: wrap; }
 
 /* ---------- Impressora térmica ---------- */
 .printer-section { display: flex; flex-direction: column; gap: 14px; padding-top: 20px; border-top: 1px solid var(--line); }

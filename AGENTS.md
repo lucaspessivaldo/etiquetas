@@ -35,12 +35,14 @@ A versão do pacote vem de `version` no `package.json`.
 ## Estrutura
 
 ```
-electron/main.cjs        janela; registra os IPC thermal:list e thermal:print
-electron/preload.cjs     expõe SÓ window.thermal.{list, print} (contextBridge)
-electron/printer.cjs     acha a impressora e envia bytes crus (lp -o raw ou /dev/usb/lp*)
+electron/main.cjs        janela; registra os IPC thermal:list/print/queue/clear
+electron/preload.cjs     expõe SÓ window.thermal.{list, print, queue, clear} (contextBridge)
+electron/printer.cjs     acha a impressora, envia bytes crus (lp -o raw ou /dev/usb/lp*),
+                         lê e limpa a fila do CUPS
 src/main.jsx, App.jsx    estado da tela, arrastar arquivo, imprimir, PDF, toasts
 src/components/          StartScreen/Toolbar/Preview (Screens.jsx), SettingsDrawer,
-                         PasteDialog, Dialog (<dialog> controlado), Icons
+                         PasteDialog, QueueDialog (fila ocupada/pausada),
+                         Dialog (<dialog> controlado), Icons
 src/engine/zpl.js        MOTOR ZPL: tokenizer, parser, renderer (o arquivo mais delicado)
 src/engine/labels.js     ZPL -> páginas finais: tamanho do papel, girar, encaixar, cópias
 src/engine/tspl.js       páginas -> bytes TSPL (BITMAP 1 bit, 203 dpi)
@@ -115,9 +117,10 @@ endereço e CPF/telefone de clientes.
 
 ## Impressão (TSPL)
 
-- `tspl.js` gera por página: `SIZE w mm,h mm` / `GAP 2 mm,0 mm` / `DIRECTION 1` /
-  `DENSITY n` / `SPEED 4` / `CLS` / `BITMAP 0,0,<bytes por linha>,<altura>,0,<dados>` /
-  `PRINT 1,1`.
+- `tspl.js` começa com um `\r\n` solto (fecha comando pela metade deixado por lixo de
+  outro trabalho, que senão engole o `SIZE`) e gera por página: `SIZE w mm,h mm` /
+  `GAP 2 mm,0 mm` / `DIRECTION 1` / `DENSITY n` / `SPEED 4` / `CLS` /
+  `BITMAP 0,0,<bytes por linha>,<altura>,0,<dados>` / `PRINT 1,1`.
 - No `BITMAP` da TSPL **bit 0 = preto (imprime), bit 1 = branco**. A largura em bytes é
   arredondada para cima e o resto da linha é branco (bits 1), senão sai uma linha preta
   na borda.
@@ -130,6 +133,24 @@ endereço e CPF/telefone de clientes.
   **com um PPD errado** (HP Designjet PostScript). Por isso sempre `lp -o raw`.
   Não altere a configuração do CUPS do usuário sem perguntar.
 - O usuário não está no grupo `lp`, então `/dev/usb/lp*` normalmente não é gravável.
+- **Quando o GNOME (`gsd-printer` + `system-config-printer`) reconfigura a fila** ao
+  ligar a impressora (visto em 03/11/2026), ele põe de novo o PPD "HP Designjet T920 PostScript" e manda
+  um trabalho "Automatic configuration" (PostScript) que prende a fila por ~70 s. As
+  etiquetas do app ficam esperando atrás dele ("travou").
+- **PDF impresso por outro programa** (Visualizador de Documentos, diálogo do sistema)
+  na fila da térmica passa por `pdftops → hpps` e sai lixo. Só o caminho raw do app
+  funciona. Se a impressora for desligada no meio, o CUPS pausa a fila e, ao reativar,
+  **reimprime o trabalho do início**.
+- Por isso, antes de imprimir, o app chama `queue()` (`lpq` + `lpstat`): se a fila
+  estiver pausada ou com trabalhos na frente, abre o `QueueDialog`, que pode limpar
+  (`cancel <ids>` + `lpadmin -p <fila> -E`). Funciona sem senha porque o usuário está no
+  `lpadmin` (`SystemGroup root lpadmin`, `PeerCred on`).
+- O nome da fila começa com `-` (`-9X10`): passe-o grudado na opção (`lpq -P-9X10`,
+  `lpstat -p-9X10`) ou depois de opção que exige argumento (`lp -d`, `lpadmin -p`).
+  `cupsenable`/`cancel -a` não aceitam esse nome. Rode tudo com `LC_ALL=C`: a saída do
+  CUPS é traduzida e o `lpstat -v` em pt_BR não diria "device for".
+- Para investigar: `/var/log/cups/access_log` e `error_log` (o usuário está no grupo
+  `adm`) e `ipptool` com `Get-Jobs` mostram nome e formato de cada trabalho.
 
 ## Sandbox do Electron no Ubuntu (importante)
 
@@ -152,7 +173,7 @@ endereço e CPF/telefone de clientes.
 ## Segurança e privacidade
 
 - `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`; o preload só
-  expõe listar/imprimir. Links externos abrem no navegador (`setWindowOpenHandler`).
+  expõe listar/imprimir/ver e limpar a fila da térmica. Links externos abrem no navegador (`setWindowOpenHandler`).
 - Tudo é local; o app não faz requisições de rede.
 - Arquivos reais da Shopee contêm dados pessoais de clientes: **não versionar**, não
   colocar em `exemplos/`, não enviar para serviços externos. Use dados fictícios.

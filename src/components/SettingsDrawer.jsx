@@ -53,6 +53,9 @@ function PrinterSection({ printers, settings, set, onCalibrate, onSystemPrint, b
       {hasPages && (
         <button type="button" className="link" onClick={onSystemPrint}>Imprimir pelo diálogo do sistema</button>
       )}
+      {hasPages && printers && printers.length > 0 && (
+        <small className="hint">Não escolha a térmica nesse diálogo: o driver que o Ubuntu põe nela está errado e sai lixo.</small>
+      )}
     </section>
   );
 }
