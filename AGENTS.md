@@ -8,57 +8,57 @@ português (pt-BR)**.
 
 ## O que é
 
-App desktop para Linux (Electron + React + Vite, gerenciado com **Bun**) que:
+Site estático (React + Vite, gerenciado com **Bun**) publicado no GitHub Pages em
+https://lucaspessivaldo.github.io/etiquetas/. Ele:
 
-1. lê etiquetas de envio em **ZPL** (Shopee, Mercado Livre…), de `.zip`, `.txt` ou `.zpl`;
+1. lê o arquivo de etiquetas de envio em **ZPL** (`.zip`, `.txt` ou `.zpl`) ou o código
+   colado na tela inicial;
 2. renderiza cada etiqueta num `<canvas>` com um **motor ZPL próprio**;
-3. gera **PDF** (jsPDF) ou **imprime direto** numa térmica de etiquetas **TSPL** via CUPS
-   em modo raw, sem driver.
+3. gera **PDF** (jsPDF) com uma etiqueta por página ou abre o **diálogo de impressão
+   do navegador**.
 
-Impressora de referência: **Knup KP-IM604** (USB `0416:5011`, se identifica como
-"POS Label Printer", `MANUFACTURER:LABEL;COMMAND SET:POS`). Ela **não entende ZPL**,
-só TSPL. Sistema de referência: **Ubuntu 25.10**.
+Tudo roda no navegador de quem usa. Não há servidor nem app desktop.
+
+## Decisões do usuário (não mude sem perguntar)
+
+- **O site é focado num único marketplace** (o formato descrito em "O arquivo de
+  etiquetas", abaixo), mas **o nome desse marketplace não pode aparecer em lugar
+  nenhum**: textos do site, código, comentários, etiqueta de exemplo, README, este
+  arquivo, mensagens de commit. Também não cite outros marketplaces. Fale em "sua
+  loja", "marketplace" ou "arquivo de etiquetas".
+- **Só tema claro.** Não há tema escuro (`color-scheme: light`, sem
+  `prefers-color-scheme: dark`).
+- **Não há impressão direta em impressora térmica.** O antigo app Electron (impressão
+  TSPL via CUPS, pacote `.deb`, perfil AppArmor) foi removido de propósito. Imprimir é
+  só pelo diálogo do navegador.
 
 ## Comandos
 
 ```bash
 bun install
-bun run dev      # Vite + Electron com recarga automática
-bun run build    # só a interface (dist/)
-bun run start    # build + abre o Electron
-bun run dist     # gera release/etiquetas-zpl_<versão>_amd64.deb
-sudo apt install ./release/etiquetas-zpl_<versão>_amd64.deb
+bun run dev      # site local com recarga automática (porta 5173)
+bun run build    # gera dist/
+bun run preview  # serve o dist/
 ```
-
-A versão do pacote vem de `version` no `package.json`.
 
 ## Estrutura
 
 ```
-electron/main.cjs        janela; registra os IPC thermal:list/print/queue/clear
-electron/preload.cjs     expõe SÓ window.thermal.{list, print, queue, clear} (contextBridge)
-electron/printer.cjs     acha a impressora, envia bytes crus (lp -o raw ou /dev/usb/lp*),
-                         lê e limpa a fila do CUPS
-src/main.jsx, App.jsx    estado da tela, arrastar arquivo, imprimir, PDF, toasts
+src/main.jsx, App.jsx    estado da tela, arrastar arquivo, PDF, imprimir, toasts
 src/components/          StartScreen (abrir arquivo + caixa de colar ZPL)/Toolbar/Preview
-                         (Screens.jsx), SettingsDrawer, QueueDialog (fila ocupada/pausada),
-                         Dialog (<dialog> controlado), Icons
+                         (Screens.jsx), SettingsDrawer, Dialog (<dialog> controlado), Icons
 src/engine/zpl.js        MOTOR ZPL: tokenizer, parser, renderer (o arquivo mais delicado)
 src/engine/labels.js     ZPL -> páginas finais: tamanho do papel, girar, encaixar, cópias
-src/engine/tspl.js       páginas -> bytes TSPL (BITMAP 1 bit, 203 dpi)
-src/engine/output.js     ler .zip/.txt, gerar PDF, imprimir pelo diálogo do sistema
-src/engine/sample.js     etiqueta de exemplo (dados fictícios)
-src/styles/              app.css (tema no estilo do chessOp, claro/escuro por
-                         prefers-color-scheme), fonts.css (fontes do motor ZPL)
-build/icon.png           ícone
-build/deb/*.sh           scripts pós-instalação/remoção do .deb (ver "Sandbox")
-exemplos/                etiqueta-exemplo.zpl (fictícia)
-imprimir.py              ferramenta de linha de comando antiga: PDF -> TSPL (opcional)
+src/engine/output.js     ler .zip/.txt, gerar PDF, imprimir pelo diálogo do navegador
+src/engine/sample.js     etiqueta de exemplo (dados fictícios, sem marca)
+src/styles/              app.css (tema claro no estilo do chessOp), fonts.css (fontes do
+                         motor ZPL)
+exemplos/                etiqueta-exemplo.zpl (a mesma do sample.js)
+.github/workflows/       pages.yml: build e publicação no GitHub Pages
 ```
 
 O fluxo: `App.jsx` → `renderPages()` (labels.js) → `ZPL.parse()` + `ZPL.render()`
-(zpl.js) → canvases → prévia (`url` PNG) / `buildPdf()` / `buildTspl()` →
-`window.thermal.print()` → IPC → `printer.cjs` → `lp -d <fila> -o raw`.
+(zpl.js) → canvases → prévia (`url` PNG) / `buildPdf()` / `printWithDialog()`.
 
 ## Motor ZPL (`src/engine/zpl.js`)
 
@@ -82,23 +82,26 @@ Vários números parecem arbitrários mas foram medidos. Não "arrume" sem medir
   subsets da Zebra (modo N começa em B; `>;` `>:` `>5` etc.). Os outros códigos vêm do
   `bwip-js` (`bwipjs.raw`) e são desenhados com o módulo do `^BY`. A linha de
   interpretação usa a fonte A ampliada pela largura do módulo.
+  Diferença conhecida: com `>;` e quantidade **ímpar** de dígitos, a Zebra descarta o
+  último dígito e o nosso codificador mantém todos (medido em 14/11/2026).
 - Rotação (`N/R/I/B`): `place()` posiciona tudo. Para `^FO` o retângulo rotacionado tem
   o canto superior esquerdo em (x, y); para `^FT` gira em torno da âncora.
 - `^FR`/`^LR` (inverso) usa `globalCompositeOperation = 'difference'` com branco.
 - Gráficos: `^GF` e `~DG` em hexa comprimido (G–Y, g–z, `,` `!` `:`), `:Z64:` (zlib via
-  pako) e `:B64:`.
+  pako, CRC-16/XMODEM no final) e `:B64:`.
 - `ZPL.render()` devolve `widthDots/heightDots`: usa `^PW/^LL` se existirem, senão o
   tamanho pedido, e **cresce para caber imagens** que passam disso (`imagesExtent`).
 
-### Arquivos da Shopee (o caso principal)
+### O arquivo de etiquetas (o caso principal)
 
 - Cada etiqueta é UMA imagem de 816 × 1218 dots (4 × 6 pol): `~DGR:DEMO.GRF,…:Z64:…`
-  seguido de `^XA … ^XG R:DEMO.GRF … ^XZ` e depois `^XA^IDR:DEMO.GRF^FS^XZ`.
+  seguido de `^XA … ^XG R:DEMO.GRF … ^XZ` e depois `^XA^IDR:DEMO.GRF^FS^XZ`. O `.zip`
+  pode trazer junto a lista de empacotamento, no mesmo formato.
 - **Todas as etiquetas reutilizam o nome `DEMO.GRF`.** Por isso `parse()` guarda em cada
   etiqueta uma cópia dos gráficos daquele momento (`label.graphics`). Sem isso todas as
   páginas saem iguais à última. Não mude para um mapa global.
-- Blocos `^XA…^XZ` sem nada desenhável (só `^ID`, `^JUS`…) são ignorados para não
-  gerar páginas em branco.
+- Blocos `^XA…^XZ` sem nada desenhável (só `^ID`, `^JUS`, `^MCY`…) são ignorados para
+  não gerar páginas em branco.
 - A imagem é 4 × 6 pol; no papel padrão de 100 × 150 mm ela é reduzida ~1,5%
   (`fitToPaper` em labels.js, que nunca amplia e re-binariza depois de reduzir).
 
@@ -112,82 +115,39 @@ Não há testes automatizados. O método usado foi:
 3. Renderizar o mesmo ZPL com `ZPL.render(..., { scale: 1, mono: true })` e comparar
    (sobreposição pixel a pixel / caixas delimitadoras). As posições ficaram com 0–1 dot
    de diferença.
+4. Para códigos de barras, mais importante que o desenho é **ler os dois** com um leitor
+   (ex.: `zxing-wasm` no Bun) e conferir que trazem os mesmos dados.
 
 **Nunca envie etiquetas reais para o Labelary ou outro serviço**: elas têm nome,
 endereço e CPF/telefone de clientes.
 
-## Impressão (TSPL)
+## GitHub Pages
 
-- `tspl.js` começa com um `\r\n` solto (fecha comando pela metade deixado por lixo de
-  outro trabalho, que senão engole o `SIZE`) e gera por página: `SIZE w mm,h mm` /
-  `GAP 2 mm,0 mm` / `DIRECTION 1` / `DENSITY n` / `SPEED 4` / `CLS` /
-  `BITMAP 0,0,<bytes por linha>,<altura>,0,<dados>` / `PRINT 1,1`.
-- No `BITMAP` da TSPL **bit 0 = preto (imprime), bit 1 = branco**. A largura em bytes é
-  arredondada para cima e o resto da linha é branco (bits 1), senão sai uma linha preta
-  na borda.
-- 203 dpi fixo; limiar de binarização 160.
-- Calibrar = enviar `GAPDETECT\r\n`.
-- Para testar o caminho de impressão **sem gastar etiqueta**, envie só `CLS\r\n`.
-- `printer.cjs`: primeiro procura filas do CUPS com `usb://` contendo `LABEL` ou `POS`
-  (`lpstat -v`); se não achar, usa `/dev/usb/lp*` com permissão de escrita.
-- O Ubuntu cria a fila sozinho ao ligar a impressora (aqui ela se chamou `-9X10`),
-  **com um PPD errado** (HP Designjet PostScript). Por isso sempre `lp -o raw`.
-  Não altere a configuração do CUPS do usuário sem perguntar.
-- O usuário não está no grupo `lp`, então `/dev/usb/lp*` normalmente não é gravável.
-- **Quando o GNOME (`gsd-printer` + `system-config-printer`) reconfigura a fila** ao
-  ligar a impressora (visto em 03/11/2026), ele põe de novo o PPD "HP Designjet T920 PostScript" e manda
-  um trabalho "Automatic configuration" (PostScript) que prende a fila por ~70 s. As
-  etiquetas do app ficam esperando atrás dele ("travou").
-- **PDF impresso por outro programa** (Visualizador de Documentos, diálogo do sistema)
-  na fila da térmica passa por `pdftops → hpps` e sai lixo. Só o caminho raw do app
-  funciona. Se a impressora for desligada no meio, o CUPS pausa a fila e, ao reativar,
-  **reimprime o trabalho do início**.
-- Por isso, antes de imprimir, o app chama `queue()` (`lpq` + `lpstat`): se a fila
-  estiver pausada ou com trabalhos na frente, abre o `QueueDialog`, que pode limpar
-  (`cancel <ids>` + `lpadmin -p <fila> -E`). Funciona sem senha porque o usuário está no
-  `lpadmin` (`SystemGroup root lpadmin`, `PeerCred on`).
-- O nome da fila começa com `-` (`-9X10`): passe-o grudado na opção (`lpq -P-9X10`,
-  `lpstat -p-9X10`) ou depois de opção que exige argumento (`lp -d`, `lpadmin -p`).
-  `cupsenable`/`cancel -a` não aceitam esse nome. Rode tudo com `LC_ALL=C`: a saída do
-  CUPS é traduzida e o `lpstat -v` em pt_BR não diria "device for".
-- Para investigar: `/var/log/cups/access_log` e `error_log` (o usuário está no grupo
-  `adm`) e `ipptool` com `Get-Jobs` mostram nome e formato de cada trabalho.
-
-## Sandbox do Electron no Ubuntu (importante)
-
-- O Ubuntu 23.10+ tem `kernel.apparmor_restrict_unprivileged_userns = 1`: o sandbox do
-  Chromium só funciona para executáveis com um perfil AppArmor que permita `userns`.
-- O `chrome-sandbox` com setuid também não serve: o disco do projeto é montado com
-  `nosuid`, e o teste padrão do electron-builder (`unshare --user` rodando como root)
-  não percebe a restrição.
-- Solução adotada: o `.deb` instala `/etc/apparmor.d/etiquetas-zpl` em
-  `build/deb/after-install.sh` (mesmo modelo do perfil do VS Code no Ubuntu) e remove em
-  `after-remove.sh`. O caminho no perfil é `"/opt/Etiquetas ZPL/etiquetas-zpl"`: se
-  mudar `productName` ou `executableName` no `package.json`, **atualize o perfil**.
-- **Não use `--no-sandbox`.** O usuário escolheu manter o sandbox.
-- Consequência: `bun run dev`/`start` e `release/linux-unpacked/` podem não abrir num
-  terminal comum do usuário (sem perfil). O app instalado pelo `.deb` abre.
-- Para inspecionar o app rodando (sem ver a tela), inicie com
-  `--remote-debugging-port=9333` e use o protocolo CDP (`/json/list`,
-  `Runtime.evaluate`, `Page.captureScreenshot`).
+- `.github/workflows/pages.yml` roda `bun install --frozen-lockfile` + `bun run build` e
+  publica o `dist/` a cada push no `main`. Em pull request ele só confere o build.
+- `base: './'` no `vite.config.js` faz os caminhos funcionarem no subcaminho
+  `/etiquetas/` do Pages. Não troque por `'/'`.
+- Para testar como no Pages: `bun run build` e `bunx vite preview --base /etiquetas/`,
+  abrindo `http://localhost:4173/etiquetas/`.
+- O token do `gh` deste computador não tem o escopo `workflow`: push que altera arquivos
+  em `.github/workflows/` precisa ir por SSH (`git@github.com:lucaspessivaldo/etiquetas.git`).
 
 ## Segurança e privacidade
 
-- `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`; o preload só
-  expõe listar/imprimir/ver e limpar a fila da térmica. Links externos abrem no navegador (`setWindowOpenHandler`).
-- Tudo é local; o app não faz requisições de rede.
-- Arquivos reais da Shopee contêm dados pessoais de clientes: **não versionar**, não
+- **O site não faz requisições de rede**: o arquivo é lido e convertido só no
+  navegador. O CSP do `index.html` (`connect-src 'self'`, `font-src 'self' data:`)
+  garante isso. Não adicione analytics, fontes do Google ou APIs externas sem perguntar.
+- Arquivos reais de etiquetas contêm dados pessoais de clientes: **não versionar**, não
   colocar em `exemplos/`, não enviar para serviços externos. Use dados fictícios.
 
 ## Visual
 
 - Mesmo estilo do outro projeto do usuário, o **chessOp** (`~/codes/chessOp`,
-  `src/index.css`): preto puro no branco e o inverso no escuro, cantos de 2 px, títulos
-  em **Anton** maiúsculo, texto em **Inter**, código em **JetBrains Mono**, verde só na
-  ação principal (`.btn.primary`). As cores são os mesmos `oklch` de lá.
+  `src/index.css`): preto puro no branco, cantos de 2 px, títulos em **Anton**
+  maiúsculo, texto em **Inter**, código em **JetBrains Mono**, verde só na ação
+  principal (`.btn.primary`). As cores são os mesmos `oklch` do tema claro de lá.
 - As fontes da interface vêm dos pacotes `@fontsource` (importados em `main.jsx`) e são
-  empacotadas pelo Vite. **Não use Google Fonts**: o app não pode fazer requisições de
-  rede e o CSP do `index.html` só permite fontes locais.
+  empacotadas pelo Vite. **Não use Google Fonts** (o site não faz requisições externas).
 - Anton tem `line-height` .95: em elemento com `overflow: hidden` o acento de maiúsculas
   ("CÓDIGO") é cortado; nesses casos aumente o `line-height`.
 
@@ -196,23 +156,6 @@ endereço e CPF/telefone de clientes.
 - Comentários curtos em português, explicando o porquê (não o quê).
 - O motor (`zpl.js`) é JavaScript puro sem React; mantenha assim para poder testar fora
   da interface.
-- Configurações do usuário ficam no `localStorage` (`zpl2pdf-settings`), dentro de
-  `~/.config/Etiquetas ZPL`.
+- Configurações do usuário ficam no `localStorage` (`zpl2pdf-settings`).
 - `<dialog>`: o evento `close` não disparou de forma confiável nos testes; o componente
   `Dialog` controla abrir/fechar pelo estado do React e os formulários usam `onSubmit`.
-
-## Versão web (GitHub Pages)
-
-- `.github/workflows/pages.yml` roda `bun run build` e publica o `dist/` em
-  https://lucaspessivaldo.github.io/etiquetas/ a cada push no `main`. Em pull request
-  ele só confere o build.
-- É a mesma interface sem o Electron: `window.thermal` não existe, a seção da térmica
-  mostra "Disponível no aplicativo para Linux" e **Imprimir** abre o diálogo do
-  navegador. Todo uso de `window.thermal` precisa continuar testando se ele existe.
-- `base: './'` no `vite.config.js` faz os caminhos funcionarem tanto no Electron
-  (arquivo local) quanto no subcaminho `/etiquetas/` do Pages. Não troque por `'/'`.
-- O site também não pode fazer requisições de rede: as etiquetas têm dados de clientes
-  e só podem ser lidas no navegador de quem usa.
-- No CI, `ELECTRON_SKIP_BINARY_DOWNLOAD=1` evita baixar o Electron, que o site não usa.
-- Para testar como no Pages: `bun run build` e `bunx vite preview --base /etiquetas/`,
-  abrindo `http://localhost:4173/etiquetas/`.

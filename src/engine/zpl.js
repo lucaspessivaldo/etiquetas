@@ -2,7 +2,7 @@
  * Motor de renderização ZPL -> Canvas.
  *
  * Interpreta os comandos ZPL II mais usados em etiquetas de envio
- * (Shopee, Mercado Livre, Correios, transportadoras) e desenha cada
+ * (marketplaces, Correios, transportadoras) e desenha cada
  * etiqueta em um <canvas>. As medidas são em "dots" da impressora,
  * como no ZPL; a escala final é aplicada só na hora de desenhar.
  *
@@ -265,7 +265,7 @@ function graphicKey(name) {
  * Separa o texto ZPL em etiquetas (^XA ... ^XZ).
  * Gráficos ~DG e formatos ^DF ficam guardados para uso nas etiquetas seguintes.
  * Cada etiqueta guarda os gráficos que existiam quando ela foi lida, porque arquivos
- * como os da Shopee reaproveitam o mesmo nome (R:DEMO.GRF) em todas as etiquetas.
+ * como os de alguns marketplaces reaproveitam o mesmo nome (R:DEMO.GRF) em todas as etiquetas.
  */
 function parse(src) {
   const tokens = tokenize(src);

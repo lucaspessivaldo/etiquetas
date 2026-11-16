@@ -1,15 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Icon } from './components/Icons.jsx';
 import { StartScreen, Toolbar, Preview } from './components/Screens.jsx';
 import { SettingsDrawer } from './components/SettingsDrawer.jsx';
-import { QueueDialog } from './components/QueueDialog.jsx';
 import { renderPages } from './engine/labels.js';
 import { readFiles, buildPdf, pdfFileName, printWithDialog } from './engine/output.js';
-import { buildTspl, CALIBRATE } from './engine/tspl.js';
 import { SAMPLE } from './engine/sample.js';
 
 const SETTINGS_KEY = 'zpl2pdf-settings';
-const DEFAULTS = { size: '100x150', w: '100', h: '150', dpmm: '8', rotate: '0', mono: true, copies: true, density: '8' };
+const DEFAULTS = { size: '100x150', w: '100', h: '150', dpmm: '8', rotate: '0', mono: true, copies: true };
 
 function useSettings() {
   const [settings, setSettings] = useState(() => {
@@ -25,21 +23,6 @@ function useSettings() {
   return [settings, set];
 }
 
-// Impressoras térmicas vistas pelo Electron; null quando roda no navegador comum.
-function usePrinters() {
-  const [printers, setPrinters] = useState(window.thermal ? [] : null);
-  useEffect(() => {
-    if (!window.thermal) return undefined;
-    let alive = true;
-    const refresh = () => window.thermal.list().then((p) => { if (alive) setPrinters(p); }).catch(() => {});
-    refresh();
-    const timer = setInterval(refresh, 4000);
-    window.addEventListener('focus', refresh);
-    return () => { alive = false; clearInterval(timer); window.removeEventListener('focus', refresh); };
-  }, []);
-  return printers;
-}
-
 function useToast() {
   const [toast, setToast] = useState(null);
   const timer = useRef(0);
@@ -51,30 +34,28 @@ function useToast() {
   return [toast, show];
 }
 
-// "Error invoking remote method 'x': Error: msg" -> "msg"
 function cleanError(e) {
-  return String((e && e.message) || e).replace(/^Error invoking remote method '[^']+':\s*(Error:\s*)?/, '');
+  return String((e && e.message) || e);
 }
 
 export default function App() {
   const [settings, set] = useSettings();
-  const printers = usePrinters();
   const [toast, showToast] = useToast();
   const [doc, setDoc] = useState({ text: '', name: '' });
   const [result, setResult] = useState({ pages: [], warnings: [] });
   const [rendering, setRendering] = useState(false);
-  const [busy, setBusy] = useState(null); // 'print' | 'pdf' | 'calibrate'
+  const [busy, setBusy] = useState(null); // 'pdf'
   const [panel, setPanel] = useState(null); // 'settings'
   const [draft, setDraft] = useState(''); // código colado na tela inicial; fica ao voltar
-  const [queue, setQueue] = useState(null); // fila da térmica ocupada ou pausada
   const [dragging, setDragging] = useState(false);
 
-  const thermal = printers && printers.length ? printers[0] : null;
   const { pages, warnings } = result;
 
   // Re-renderiza quando o arquivo ou alguma configuração de página muda.
+  // useLayoutEffect: marca "Gerando…" antes da tela ser pintada; com useEffect, ao abrir
+  // um arquivo piscava "Nenhuma etiqueta encontrada" por um quadro.
   const { size, w, h, dpmm, rotate, mono, copies } = settings;
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!doc.text.trim()) { setResult({ pages: [], warnings: [] }); setRendering(false); return undefined; }
     let cancelled = false;
     setRendering(true);
@@ -119,30 +100,6 @@ export default function App() {
   }, [openFiles]);
   useEffect(() => { document.body.classList.toggle('dragging', dragging); }, [dragging]);
 
-  // mode: 'clear' limpa a fila antes; 'force' imprime atrás do que já estiver nela.
-  async function print(mode) {
-    if (!thermal) { printWithDialog(pages); return; }
-    setQueue(null);
-    setBusy('print');
-    try {
-      if (mode === 'clear') {
-        await window.thermal.clear(thermal.id);
-      } else if (mode !== 'force') {
-        const q = await window.thermal.queue(thermal.id);
-        if (q.paused || q.jobs.length) { setQueue(q); return; }
-      }
-      await new Promise((r) => setTimeout(r, 30)); // deixa o botão mostrar "Enviando…"
-      const data = buildTspl(pages, { density: parseInt(settings.density, 10) });
-      await window.thermal.print(thermal.id, data, doc.name);
-      const n = pages.length;
-      showToast(n === 1 ? 'Etiqueta enviada para a impressora' : n + ' etiquetas enviadas para a impressora');
-    } catch (e) {
-      showToast('Não foi possível imprimir: ' + cleanError(e), true);
-    } finally {
-      setBusy(null);
-    }
-  }
-
   async function downloadPdf() {
     setBusy('pdf');
     try {
@@ -150,18 +107,6 @@ export default function App() {
       buildPdf(pages).save(pdfFileName());
     } catch (e) {
       showToast('Erro ao gerar o PDF: ' + cleanError(e), true);
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function calibrate() {
-    setBusy('calibrate');
-    try {
-      await window.thermal.print(thermal.id, CALIBRATE, 'calibrar');
-      showToast('Calibrando: a impressora vai puxar algumas etiquetas.');
-    } catch (e) {
-      showToast('Não foi possível calibrar: ' + cleanError(e), true);
     } finally {
       setBusy(null);
     }
@@ -200,8 +145,7 @@ export default function App() {
               busy={busy}
               settings={settings}
               set={set}
-              thermal={thermal}
-              onPrint={() => print()}
+              onPrint={() => printWithDialog(pages)}
               onPdf={downloadPdf}
               onClose={() => setDoc({ text: '', name: '' })}
             />
@@ -215,17 +159,6 @@ export default function App() {
         onClose={() => setPanel(null)}
         settings={settings}
         set={set}
-        printers={printers}
-        busy={busy}
-        hasPages={pages.length > 0}
-        onCalibrate={calibrate}
-        onSystemPrint={() => { setPanel(null); printWithDialog(pages); }}
-      />
-      <QueueDialog
-        queue={queue}
-        onClose={() => setQueue(null)}
-        onClear={() => print('clear')}
-        onPrint={() => print('force')}
       />
 
       {toast && <div className={'toast' + (toast.error ? ' error' : '')} role="status">{toast.text}</div>}

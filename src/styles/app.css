@@ -1,10 +1,9 @@
-/* Tema no estilo do chessOp: preto puro no branco (e o inverso no escuro),
-   cantos quase retos, títulos em Anton maiúsculo e verde só na ação principal. */
+/* Tema claro no estilo do chessOp: preto puro no branco, cantos quase retos,
+   títulos em Anton maiúsculo e verde só na ação principal. Não há tema escuro. */
 :root {
   --bg: oklch(1 0 0);
   --surface: oklch(1 0 0);
   --surface-2: oklch(0.965 0 0);
-  --hover: oklch(0.925 0 0);
   --ink: oklch(0.145 0 0);
   --ink-fg: oklch(1 0 0);
   --secondary: oklch(0.4 0 0);
@@ -14,7 +13,6 @@
   --action: oklch(0.57 0.16 145);
   --action-hover: oklch(0.51 0.16 145);
   --action-fg: oklch(1 0 0);
-  --success: oklch(0.55 0.15 145);
   --danger: oklch(0.55 0.2 27);
   --warning: oklch(0.62 0.14 70);
   --shadow: 0 24px 48px -12px rgb(0 0 0 / .28);
@@ -25,30 +23,6 @@
   --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: oklch(0.13 0 0);
-    --surface: oklch(0.165 0 0);
-    --surface-2: oklch(0.21 0 0);
-    --hover: oklch(0.26 0 0);
-    --ink: oklch(0.98 0 0);
-    --ink-fg: oklch(0.13 0 0);
-    --secondary: oklch(0.74 0 0);
-    --muted: oklch(0.56 0 0);
-    --line: oklch(1 0 0 / 9%);
-    --line-strong: oklch(1 0 0 / 18%);
-    --action: oklch(0.72 0.18 145);
-    --action-hover: oklch(0.78 0.18 145);
-    --action-fg: oklch(0.15 0 0);
-    --success: oklch(0.74 0.16 145);
-    --danger: oklch(0.7 0.17 27);
-    --warning: oklch(0.8 0.13 80);
-    --shadow: 0 24px 48px -12px rgb(0 0 0 / .6);
-    --paper-shadow: 0 1px 2px rgb(0 0 0 / .5), 0 8px 24px -8px rgb(0 0 0 / .6);
-    color-scheme: dark;
-  }
-}
-
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
@@ -71,7 +45,7 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
   letter-spacing: .01em;
   line-height: .95;
 }
-.eyebrow, .status, .field > span, .printer-section h3, .label-card figcaption, .drop-foot small {
+.eyebrow, .status, .field > span, .label-card figcaption, .drop-foot small {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -280,27 +254,6 @@ dialog h2 { margin: 0; font-size: 28px; }
 .switch input:focus-visible + .track { outline: 2px solid var(--action); outline-offset: 2px; }
 .switch .text { display: flex; flex-direction: column; gap: 2px; font-size: 14px; font-weight: 600; }
 .switch .text small { font-weight: 400; }
-
-.modal { width: min(640px, calc(100vw - 32px)); padding: 22px 24px; }
-.modal footer { display: flex; justify-content: flex-end; gap: 8px; }
-.queue { width: min(480px, calc(100vw - 32px)); }
-.queue p { margin: 0; font-size: 14px; line-height: 1.5; }
-.queue ul { margin: 8px 0 10px; padding-left: 20px; font-size: 13.5px; line-height: 1.6; overflow-wrap: anywhere; }
-.queue .hint { color: var(--muted); font-size: 12.5px; line-height: 1.4; }
-.queue footer { flex-wrap: wrap; }
-
-/* ---------- Impressora térmica ---------- */
-.printer-section { display: flex; flex-direction: column; gap: 14px; padding-top: 20px; border-top: 1px solid var(--line); }
-.printer-section h3 { margin: 0; color: var(--muted); }
-.printer-options { display: flex; flex-direction: column; gap: 14px; }
-.printer-detail { margin: -8px 0 0 16px; color: var(--muted); font-size: 12px; }
-.printer-section .btn { align-self: flex-start; }
-.printer-section .link { align-self: flex-start; font-size: 13px; }
-.printer-section .hint { color: var(--muted); font-size: 12.5px; line-height: 1.4; margin-top: -8px; }
-.printer-state { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--muted); }
-.printer-state::before { content: ""; width: 8px; height: 8px; background: var(--muted); flex: none; }
-.printer-state.on { color: var(--ink); }
-.printer-state.on::before { background: var(--success); }
 
 .toast {
   position: fixed; left: 50%; bottom: 24px; z-index: 60;

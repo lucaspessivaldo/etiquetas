@@ -11,56 +11,7 @@ function Switch({ checked, onChange, title, hint }) {
   );
 }
 
-function PrinterSection({ printers, settings, set, onCalibrate, onSystemPrint, busy, hasPages }) {
-  let body;
-  if (printers === null) {
-    body = <p className="printer-state">Disponível no aplicativo para Linux.</p>;
-  } else if (!printers.length) {
-    body = (
-      <>
-        <p className="printer-state">Nenhuma impressora térmica encontrada</p>
-        <small className="hint">Ligue a impressora no USB. Ela aparece aqui sozinha em alguns segundos.</small>
-      </>
-    );
-  } else {
-    const p = printers[0];
-    body = (
-      <>
-        <p className="printer-state on">{p.name} conectada</p>
-        <p className="printer-detail">{p.detail}</p>
-        <div className="printer-options">
-          <label className="field">
-            <span>Escuridão da impressão</span>
-            <select value={settings.density} onChange={(e) => set('density', e.target.value)}>
-              <option value="6">Clara</option>
-              <option value="8">Normal</option>
-              <option value="11">Escura</option>
-              <option value="14">Bem escura</option>
-            </select>
-          </label>
-          <button type="button" className="btn" onClick={onCalibrate} disabled={!!busy}>
-            {busy === 'calibrate' ? 'Calibrando…' : 'Calibrar etiquetas'}
-          </button>
-          <small className="hint">Use se a impressão sair cortada entre duas etiquetas. A impressora puxa algumas etiquetas em branco para medir.</small>
-        </div>
-      </>
-    );
-  }
-  return (
-    <section className="printer-section">
-      <h3>Impressora térmica</h3>
-      {body}
-      {hasPages && (
-        <button type="button" className="link" onClick={onSystemPrint}>Imprimir pelo diálogo do sistema</button>
-      )}
-      {hasPages && printers && printers.length > 0 && (
-        <small className="hint">Não escolha a térmica nesse diálogo: o driver que o Ubuntu põe nela está errado e sai lixo.</small>
-      )}
-    </section>
-  );
-}
-
-export function SettingsDrawer({ open, onClose, settings, set, ...printerProps }) {
+export function SettingsDrawer({ open, onClose, settings, set }) {
   return (
     <Dialog open={open} onClose={onClose} className="drawer">
       <form method="dialog" onSubmit={(e) => { e.preventDefault(); onClose(); }}>
@@ -95,7 +46,7 @@ export function SettingsDrawer({ open, onClose, settings, set, ...printerProps }
           checked={settings.mono}
           onChange={(v) => set('mono', v)}
           title="Preto e branco puro"
-          hint="Texto e códigos de barras mais nítidos na térmica."
+          hint="Texto e códigos de barras mais nítidos na impressão."
         />
         <Switch
           checked={settings.copies}
@@ -103,8 +54,6 @@ export function SettingsDrawer({ open, onClose, settings, set, ...printerProps }
           title="Respeitar número de cópias"
           hint="Gera uma página por cópia pedida no arquivo (^PQ)."
         />
-
-        <PrinterSection settings={settings} set={set} {...printerProps} />
       </form>
     </Dialog>
   );

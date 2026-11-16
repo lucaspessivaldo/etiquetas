@@ -9,7 +9,7 @@ export function StartScreen({ onFiles, draft, onDraft, onConvert, onSample }) {
   return (
     <section className="start">
       <header className="start-head">
-        <p className="eyebrow">Shopee · Mercado Livre · Zebra</p>
+        <p className="eyebrow">ZPL · 10 × 15 cm · PDF</p>
         <h1>Etiquetas ZPL em PDF</h1>
       </header>
       <div className="start-grid">
@@ -24,7 +24,7 @@ export function StartScreen({ onFiles, draft, onDraft, onConvert, onSample }) {
         <button type="button" className="drop" onClick={() => input.current.click()}>
           <span className="drop-icon"><Icon name="upload" /></span>
           <span className="drop-title">Abrir arquivo</span>
-          <span className="drop-text">Arraste aqui ou clique para escolher o arquivo da Shopee ou do Mercado Livre.</span>
+          <span className="drop-text">Arraste aqui ou clique para escolher o .zip de etiquetas que você baixou da sua loja.</span>
           <span className="drop-foot">
             <small>.zip, .txt ou .zpl</small>
             <Icon name="arrow" />
@@ -61,7 +61,7 @@ export function StartScreen({ onFiles, draft, onDraft, onConvert, onSample }) {
 
 function fmtMm(v) { return (Math.round(v * 10) / 10).toString().replace('.', ','); }
 
-export function Toolbar({ name, pages, rendering, busy, settings, set, thermal, onPrint, onPdf, onClose }) {
+export function Toolbar({ name, pages, rendering, busy, settings, set, onPrint, onPdf, onClose }) {
   const n = pages.length;
   const status = rendering
     ? 'Gerando…'
@@ -93,17 +93,11 @@ export function Toolbar({ name, pages, rendering, busy, settings, set, thermal, 
             mm
           </span>
         )}
-        <button
-          type="button"
-          className={'btn' + (thermal ? ' primary' : '')}
-          disabled={disabled}
-          onClick={onPrint}
-          title={thermal ? 'Enviar direto para a ' + thermal.name : 'Abrir o diálogo de impressão'}
-        >
+        <button type="button" className="btn" disabled={disabled} onClick={onPrint} title="Abrir o diálogo de impressão">
           <Icon name="printer" />
-          {busy === 'print' ? 'Enviando…' : 'Imprimir'}
+          Imprimir
         </button>
-        <button type="button" className={'btn' + (thermal ? '' : ' primary')} disabled={disabled} onClick={onPdf}>
+        <button type="button" className="btn primary" disabled={disabled} onClick={onPdf}>
           <Icon name="download" />
           {busy === 'pdf' ? 'Gerando PDF…' : 'Baixar PDF'}
         </button>

@@ -1,5 +1,4 @@
-# Publica a interface (abrir ZPL, prévia, gerar PDF) no GitHub Pages.
-# A impressão direta na térmica só existe no app Electron, não no site.
+# Publica o site (abrir ZPL, prévia, gerar PDF) no GitHub Pages.
 name: GitHub Pages
 
 on:
@@ -24,10 +23,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.4
-      # O site não usa o Electron: não precisa baixar o binário dele.
       - run: bun install --frozen-lockfile
-        env:
-          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
       - run: bun run build
       - uses: actions/upload-pages-artifact@v5
         with:

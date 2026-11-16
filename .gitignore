@@ -1,3 +1,4 @@
 node_modules/
 dist/
+# build antigo do app desktop (removido), se ainda existir na sua máquina
 release/
