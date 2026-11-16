@@ -45,7 +45,7 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
   letter-spacing: .01em;
   line-height: .95;
 }
-.status, .field > span, .label-card figcaption, .paste-label {
+.status, .field > span, .label-card figcaption, .paste-or {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -124,18 +124,46 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 24px 48px; }
 .open-hint { color: var(--muted); font-size: 13px; }
 .btn.ink { background: var(--ink); border-color: var(--ink); color: var(--ink-fg); }
 .btn.ink:hover:not(:disabled) { opacity: .85; }
-/* "ou cole o código ZPL" entre dois traços */
-.paste-label { display: flex; align-items: center; gap: 12px; color: var(--muted); }
-.paste-label::before, .paste-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+/* "ou" entre dois traços */
+.paste-or { display: flex; align-items: center; gap: 12px; color: var(--secondary); }
+.paste-or::before, .paste-or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+/* Caixa de colar: branca e tracejada (área para pôr algo), com o aviso no meio enquanto vazia */
+.code-box { position: relative; }
 .paste textarea {
-  flex: 1; width: 100%; min-height: 190px; resize: vertical;
+  display: block; width: 100%; min-height: 190px; resize: vertical;
   padding: 12px 14px;
   font: 12.5px/1.6 var(--font-mono);
-  color: var(--ink); background: var(--surface-2);
-  border: 1px solid var(--line); border-radius: var(--radius);
+  color: var(--ink); background: var(--surface);
+  border: 1.5px dashed var(--muted); border-radius: var(--radius);
+  cursor: text;
+  transition: border-color .12s, background .12s;
 }
-.paste textarea::placeholder { color: var(--muted); }
-.paste textarea:focus-visible { outline: none; border-color: var(--action); }
+.paste textarea:hover { border-color: var(--secondary); }
+/* O exemplo de ZPL fica bem claro, como fundo da caixa */
+.paste textarea::placeholder { color: var(--line-strong); }
+.paste textarea:focus-visible {
+  outline: none;
+  border-style: solid; border-color: var(--action);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--action) 18%, transparent);
+}
+.code-hint {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px; text-align: center;
+  color: var(--ink);
+  pointer-events: none;
+}
+/* Fundo branco esfumado atrás do aviso, para ler bem por cima do exemplo */
+.code-hint > div {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 16px;
+  background: var(--surface);
+  box-shadow: 0 0 18px 14px var(--surface);
+}
+.code-hint svg { width: 26px; height: 26px; margin-bottom: 6px; }
+.code-hint strong { font-size: 15px; font-weight: 600; }
+.code-hint span { color: var(--muted); font-size: 13px; }
 .paste-foot { display: flex; justify-content: flex-end; }
 
 .note {

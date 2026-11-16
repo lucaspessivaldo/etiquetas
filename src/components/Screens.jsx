@@ -2,6 +2,17 @@ import { useRef } from 'react';
 import { Icon } from './Icons.jsx';
 import { PAPER_SIZES } from '../engine/labels.js';
 
+// Exemplo que aparece bem claro ao fundo da caixa vazia, atrás do aviso (dados fictícios).
+const CODE_EXAMPLE = [
+  '^XA',
+  '^CI28',
+  '^FO50,40^A0N,36,36^FDDestinatário^FS',
+  '^FO50,90^A0N,28,28^FDRua Exemplo, 123^FS',
+  '^FO50,150^BY3^BCN,100,Y,N,N^FD123456789^FS',
+  '^FO50,300^GB700,3,3^FS',
+  '^XZ',
+].join('\n');
+
 // Tela inicial: uma caixa só, com o botão de abrir arquivo em cima e o código colado embaixo.
 // Arrastar o arquivo para qualquer lugar da janela também abre (App.jsx).
 export function StartScreen({ onFiles, draft, onDraft, onConvert, onSample }) {
@@ -26,17 +37,30 @@ export function StartScreen({ onFiles, draft, onDraft, onConvert, onSample }) {
           </button>
           <span className="open-hint">.zip, .txt ou .zpl, ou arraste o arquivo para a janela</span>
         </div>
-        <label htmlFor="zpl-code" className="paste-label">ou cole o código ZPL</label>
-        <textarea
-          id="zpl-code"
-          spellCheck={false}
-          value={draft}
-          onChange={(e) => onDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && ready) { e.preventDefault(); onConvert(); }
-          }}
-          placeholder={'^XA\n^FO50,50^A0N,40,40^FDOlá mundo^FS\n^XZ'}
-        />
+        <div className="paste-or" aria-hidden="true">ou</div>
+        <div className="code-box">
+          <textarea
+            id="zpl-code"
+            aria-label="Código ZPL"
+            spellCheck={false}
+            placeholder={CODE_EXAMPLE}
+            value={draft}
+            onChange={(e) => onDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && ready) { e.preventDefault(); onConvert(); }
+            }}
+          />
+          {/* Só o exemplo cinza parecia conteúdo apagado: o aviso no meio diz o que fazer */}
+          {!draft && (
+            <div className="code-hint" aria-hidden="true">
+              <div>
+                <Icon name="clipboard" />
+                <strong>Cole aqui o código ZPL</strong>
+                <span>Clique na caixa e aperte Ctrl + V</span>
+              </div>
+            </div>
+          )}
+        </div>
         <div className="paste-foot">
           <button type="submit" className="btn primary" disabled={!ready}>
             Converter <Icon name="arrow" />

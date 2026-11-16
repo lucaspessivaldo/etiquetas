@@ -4,6 +4,7 @@ const paths = {
   download: 'M12 4v12m0 0-4-4m4 4 4-4M4 20h16',
   close: 'M18 6 6 18M6 6l12 12',
   arrow: 'M5 12h14m-6-6 6 6-6 6',
+  clipboard: 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 2h6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z',
 };
 
 export function Icon({ name }) {
