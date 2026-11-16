@@ -38,14 +38,14 @@ body {
 svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 
 /* Título condensado em maiúsculas (Anton) e rótulo pequeno espaçado */
-.start-head h1, .drop-title, .paste label, .doc strong, dialog h2, .logo {
+.start h1, .doc strong, dialog h2, .logo {
   font-family: var(--font-display);
   font-weight: 400;
   text-transform: uppercase;
   letter-spacing: .01em;
   line-height: .95;
 }
-.eyebrow, .status, .field > span, .label-card figcaption, .drop-foot small {
+.status, .field > span, .label-card figcaption, .paste-label {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -97,7 +97,8 @@ select { padding-right: 32px; cursor: pointer; }
   padding: 0 max(24px, calc((100% - 1200px) / 2 + 24px));
   border-bottom: 1px solid var(--line);
 }
-.logo { display: flex; align-items: center; gap: 10px; font-size: 20px; }
+.logo { display: flex; align-items: center; gap: 10px; font-size: 20px; color: inherit; text-decoration: none; }
+.logo:hover .mark { background: var(--action); color: var(--action-fg); }
 .mark {
   display: grid; place-items: center;
   width: 28px; height: 28px;
@@ -108,45 +109,24 @@ select { padding-right: 32px; cursor: pointer; }
 main { max-width: 1200px; margin: 0 auto; padding: 0 24px 48px; }
 
 /* ---------- Tela inicial ---------- */
-.start { display: flex; flex-direction: column; gap: 28px; padding-top: 44px; }
-.eyebrow { margin: 0; letter-spacing: .2em; color: var(--muted); }
-.start-head h1 { margin: 10px 0 0; font-size: clamp(44px, 7vw, 80px); }
-.start-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  gap: 16px;
-}
-.drop {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
-  min-height: 320px; padding: 28px;
-  font: inherit; text-align: left;
-  background: var(--ink); color: var(--ink-fg);
-  border: 1px solid var(--ink); border-radius: var(--radius);
-  cursor: pointer;
-  transition: opacity .15s;
-}
-.drop:hover { opacity: .9; }
-.drop-icon {
-  display: grid; place-items: center;
-  width: 44px; height: 44px; margin-bottom: 12px;
-  border: 1px solid color-mix(in oklch, var(--ink-fg) 30%, transparent);
-}
-.drop-icon svg { width: 22px; height: 22px; }
-.drop-title { font-size: 36px; }
-.drop-text { max-width: 34ch; font-size: 14px; line-height: 1.5; opacity: .75; }
-.drop-foot {
-  display: flex; align-items: center; justify-content: space-between;
-  width: 100%; margin-top: auto; padding-top: 16px;
-  opacity: .7;
-}
+.start { display: flex; flex-direction: column; gap: 24px; padding-top: 44px; }
+.start h1 { margin: 0; font-size: clamp(44px, 7vw, 80px); }
 
+/* Caixa única: abrir arquivo em cima, código colado embaixo */
 .paste {
-  display: flex; flex-direction: column; gap: 14px;
+  display: flex; flex-direction: column; gap: 16px;
+  max-width: 760px;
   padding: 24px 24px 20px;
   background: var(--surface);
   border: 1px solid var(--line-strong); border-radius: var(--radius);
 }
-.paste label { font-size: 26px; }
+.open-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; }
+.open-hint { color: var(--muted); font-size: 13px; }
+.btn.ink { background: var(--ink); border-color: var(--ink); color: var(--ink-fg); }
+.btn.ink:hover:not(:disabled) { opacity: .85; }
+/* "ou cole o código ZPL" entre dois traços */
+.paste-label { display: flex; align-items: center; gap: 12px; color: var(--muted); }
+.paste-label::before, .paste-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .paste textarea {
   flex: 1; width: 100%; min-height: 190px; resize: vertical;
   padding: 12px 14px;
@@ -156,8 +136,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 24px 48px; }
 }
 .paste textarea::placeholder { color: var(--muted); }
 .paste textarea:focus-visible { outline: none; border-color: var(--action); }
-.paste-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.paste-foot small { color: var(--muted); font-size: 12.5px; }
+.paste-foot { display: flex; justify-content: flex-end; }
 
 .note {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
@@ -291,12 +270,9 @@ body.dragging .start { visibility: hidden; }
   .bar .btn { width: 40px; padding: 0; }
   main { padding: 0 16px 32px; }
   .start { gap: 20px; padding-top: 28px; }
-  .start-grid { grid-template-columns: 1fr; }
-  .drop { min-height: 0; padding: 22px; }
-  .drop-title { font-size: 30px; }
   .paste { padding: 18px 16px 16px; }
+  .open-row .btn { width: 100%; }
   .paste textarea { min-height: 150px; }
-  .paste-foot small { display: none; }
   .paste-foot .btn { width: 100%; }
   .toolbar { gap: 10px; }
   .doc { padding-right: 48px; }

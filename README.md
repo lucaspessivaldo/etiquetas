@@ -10,9 +10,9 @@ etiquetas têm nome, endereço e telefone de clientes, e continuam só no seu co
 
 ## Usar
 
-1. Abra o site e arraste o `.zip` de etiquetas que você baixou da sua loja (também
-   aceita `.txt` e `.zpl`), ou cole o código ZPL na caixa **Colar código ZPL** e clique
-   em **Converter**.
+1. Abra o site e clique em **Abrir arquivo** para escolher o `.zip` de etiquetas que
+   você baixou da sua loja, ou arraste o arquivo para a janela. Também aceita `.txt` e
+   `.zpl`. Se tiver só o código ZPL, cole na caixa e clique em **Converter**.
 2. Confira a prévia.
 3. Clique em **Baixar PDF**, ou em **Imprimir** para abrir o diálogo de impressão do
    navegador.

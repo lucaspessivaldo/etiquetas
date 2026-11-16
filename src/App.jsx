@@ -117,10 +117,15 @@ export default function App() {
   return (
     <>
       <header className="bar">
-        <div className="logo">
+        <a
+          className="logo"
+          href="./"
+          title="Voltar ao início"
+          onClick={(e) => { e.preventDefault(); setPanel(null); setDoc({ text: '', name: '' }); }}
+        >
           <span className="mark"><Icon name="printer" /></span>
-          Etiquetas ZPL
-        </div>
+          Etiquetas
+        </a>
         <button type="button" className="btn quiet" onClick={() => setPanel('settings')}>
           <Icon name="settings" />
           <span>Configurações</span>

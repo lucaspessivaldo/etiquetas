@@ -54,6 +54,9 @@ src/engine/sample.js     etiqueta de exemplo (dados fictícios, sem marca)
 src/styles/              app.css (tema claro no estilo do chessOp), fonts.css (fontes do
                          motor ZPL)
 exemplos/                etiqueta-exemplo.zpl (a mesma do sample.js)
+public/                  favicon.svg (mesmo desenho do logo da barra) e os PNGs gerados
+                         dele: favicon-32.png e apple-touch-icon.png (180 px, fundo preto
+                         sem transparência). Se mudar o SVG, gere os PNGs de novo.
 .github/workflows/       pages.yml: build e publicação no GitHub Pages
 ```
 
