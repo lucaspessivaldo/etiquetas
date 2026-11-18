@@ -14,8 +14,8 @@ https://lucaspessivaldo.github.io/etiquetas/. Ele:
 1. lê o arquivo de etiquetas de envio em **ZPL** (`.zip`, `.txt` ou `.zpl`) ou o código
    colado na tela inicial;
 2. renderiza cada etiqueta num `<canvas>` com um **motor ZPL próprio**;
-3. gera **PDF** (jsPDF) com uma etiqueta por página ou abre o **diálogo de impressão
-   do navegador**.
+3. gera **PDF** (montado à mão, sem biblioteca) com uma etiqueta por página ou abre o
+   **diálogo de impressão do navegador**.
 
 Tudo roda no navegador de quem usa. Não há servidor nem app desktop.
 
@@ -61,7 +61,25 @@ public/                  favicon.svg (mesmo desenho do logo da barra) e os PNGs 
 ```
 
 O fluxo: `App.jsx` → `renderPages()` (labels.js) → `ZPL.parse()` + `ZPL.render()`
-(zpl.js) → canvases → prévia (`url` PNG) / `buildPdf()` / `printWithDialog()`.
+(zpl.js) → canvas → página com prévia (`url` PNG) e `bitmap` compacto → `buildPdf()` /
+`printWithDialog()`.
+
+## PDF e desempenho (arquivos com muitas etiquetas)
+
+- Com 50 etiquetas o jsPDF travava a aba (~0,4 s por página sem soltar a tela, o Chrome
+  oferecia fechar a aba) e o PDF tinha ~8 MB. Por isso **não use jsPDF** de novo.
+- `renderPages()` (labels.js) guarda cada página como `bitmap` `{ w, h, bpc, data }` e
+  solta o canvas (50 canvases de 1600 × 2400 ocupavam ~750 MB). Com "preto e branco
+  puro" é 1 bit por pixel (bit 1 = branco, 0 = preto, linhas completadas até o byte);
+  sem ele, 1 byte de cinza por pixel. Cópias (`^PQ`) apontam para o mesmo `bitmap`.
+- `buildPdf()` (output.js) escreve o PDF à mão: por página, uma imagem `DeviceGray`
+  com `/FlateDecode` (pako) e o conteúdo `q w 0 0 h 0 0 cm /Im0 Do Q`. Cópias reaproveitam
+  a mesma imagem. É assíncrono, cede a vez a cada 4 páginas e informa o progresso
+  ("Gerando PDF… 12/50"). 50 etiquetas: ~0,4 s no total e ~620 KB.
+- `renderPages()` cede a vez sempre que passa de ~50 ms trabalhando.
+- Para conferir o PDF: `pdfinfo`, `pdfimages -list` e `pdfimages -png` (as imagens
+  extraídas devem ser idênticas às originais). Gere arquivos de teste com dados
+  fictícios.
 
 ## Motor ZPL (`src/engine/zpl.js`)
 
@@ -130,6 +148,8 @@ endereço e CPF/telefone de clientes.
   publica o `dist/` a cada push no `main`. Em pull request ele só confere o build.
 - `base: './'` no `vite.config.js` faz os caminhos funcionarem no subcaminho
   `/etiquetas/` do Pages. Não troque por `'/'`.
+- Se o servidor do Vite continuar servindo a versão velha de um arquivo recém-editado
+  (aconteceu algumas vezes neste computador), reinicie o servidor.
 - Para testar como no Pages: `bun run build` e `bunx vite preview --base /etiquetas/`,
   abrindo `http://localhost:4173/etiquetas/`.
 - O token do `gh` deste computador não tem o escopo `workflow`: push que altera arquivos

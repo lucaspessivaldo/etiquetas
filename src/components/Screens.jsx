@@ -76,7 +76,7 @@ export function StartScreen({ onFiles, draft, onDraft, onConvert, onSample }) {
 
 function fmtMm(v) { return (Math.round(v * 10) / 10).toString().replace('.', ','); }
 
-export function Toolbar({ name, pages, rendering, busy, settings, set, onPrint, onPdf, onClose }) {
+export function Toolbar({ name, pages, rendering, busy, pdfDone, settings, set, onPrint, onPdf, onClose }) {
   const n = pages.length;
   const status = rendering
     ? 'Gerando…'
@@ -114,7 +114,7 @@ export function Toolbar({ name, pages, rendering, busy, settings, set, onPrint, 
         </button>
         <button type="button" className="btn primary" disabled={disabled} onClick={onPdf}>
           <Icon name="download" />
-          {busy === 'pdf' ? 'Gerando PDF…' : 'Baixar PDF'}
+          {busy === 'pdf' ? 'Gerando PDF… ' + pdfDone + '/' + n : 'Baixar PDF'}
         </button>
         <button type="button" id="clear" className="btn quiet icon" title="Abrir outro arquivo"
           aria-label="Fechar e abrir outro arquivo" onClick={onClose}>

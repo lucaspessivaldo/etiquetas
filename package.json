@@ -19,7 +19,6 @@
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@fontsource/anton": "^5.3.0",
     "bwip-js": "4",
-    "jspdf": "2",
     "jszip": "3",
     "pako": "2",
     "react": "18",

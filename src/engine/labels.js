@@ -54,10 +54,39 @@ function fitToPaper(cv, pxPerMm, wmm, hmm, mono) {
   return out;
 }
 
+// Guarda a página como bitmap compacto e solta o canvas: 50 canvases de 1600 × 2400
+// ocupavam ~750 MB. No preto e branco é 1 bit por pixel, já no formato da imagem do
+// PDF (bit 1 = branco, bit 0 = preto, linhas completadas até o byte). Sem o preto e
+// branco puro, guarda 1 byte de cinza por pixel.
+function toBitmap(cv, mono) {
+  const w = cv.width, h = cv.height;
+  const px = cv.getContext('2d').getImageData(0, 0, w, h).data;
+  if (mono) {
+    const row = Math.ceil(w / 8);
+    const data = new Uint8Array(row * h).fill(0xff);
+    for (let y = 0, i = 0; y < h; y++) {
+      const base = y * row;
+      for (let x = 0; x < w; x++, i += 4) {
+        // Transparente conta como branco.
+        if (px[i + 3] > 127 && px[i] * 299 + px[i + 1] * 587 + px[i + 2] * 114 < 128000) {
+          data[base + (x >> 3)] &= ~(0x80 >> (x & 7));
+        }
+      }
+    }
+    return { w, h, bpc: 1, data };
+  }
+  const data = new Uint8Array(w * h);
+  for (let j = 0, i = 0; j < data.length; j++, i += 4) {
+    const lum = (px[i] * 299 + px[i + 1] * 587 + px[i + 2] * 114) / 1000;
+    data[j] = 255 - (px[i + 3] * (255 - lum)) / 255;
+  }
+  return { w, h, bpc: 8, data };
+}
+
 /**
  * Renderiza todas as etiquetas. "cancelled()" permite abandonar o trabalho
  * quando o usuário troca de arquivo no meio.
- * Retorna { pages: [{ canvas, url, wmm, hmm, index, copy, copies }], warnings } ou null se cancelado.
+ * Retorna { pages: [{ bitmap, url, wmm, hmm, index, copy, copies }], warnings } ou null se cancelado.
  */
 export async function renderPages(text, settings, cancelled) {
   await ZPL.loadFonts();
@@ -71,6 +100,7 @@ export async function renderPages(text, settings, cancelled) {
   const { labels, graphics } = ZPL.parse(text);
   const pages = [];
   const warnings = new Set();
+  let lastYield = performance.now();
 
   for (let i = 0; i < labels.length; i++) {
     let r;
@@ -97,12 +127,15 @@ export async function renderPages(text, settings, cancelled) {
       if (rotate === 90 || rotate === 270) [w, h] = [h, w];
     }
     const url = canvas.toDataURL('image/png');
+    const bitmap = toBitmap(canvas, settings.mono);
     const copies = settings.copies ? Math.min(r.copies, MAX_COPIES) : 1;
-    for (let c = 0; c < copies; c++) pages.push({ canvas, url, wmm: w, hmm: h, index: i + 1, copy: c + 1, copies });
+    for (let c = 0; c < copies; c++) pages.push({ bitmap, url, wmm: w, hmm: h, index: i + 1, copy: c + 1, copies });
 
-    // Mantém a tela responsiva em arquivos com muitas etiquetas.
-    if (i % 5 === 4) {
+    // Mantém a tela responsiva em arquivos com muitas etiquetas: cede a vez sempre que
+    // passar de ~50 ms trabalhando (a cada 5 etiquetas a tela travava ~0,6 s).
+    if (performance.now() - lastYield > 50) {
       await new Promise((res) => setTimeout(res));
+      lastYield = performance.now();
       if (cancelled()) return null;
     }
   }

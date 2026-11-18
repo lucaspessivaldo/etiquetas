@@ -3,7 +3,7 @@ import { Icon } from './components/Icons.jsx';
 import { StartScreen, Toolbar, Preview } from './components/Screens.jsx';
 import { SettingsDrawer } from './components/SettingsDrawer.jsx';
 import { renderPages } from './engine/labels.js';
-import { readFiles, buildPdf, pdfFileName, printWithDialog } from './engine/output.js';
+import { readFiles, buildPdf, saveFile, pdfFileName, printWithDialog } from './engine/output.js';
 import { SAMPLE } from './engine/sample.js';
 
 const SETTINGS_KEY = 'zpl2pdf-settings';
@@ -45,6 +45,7 @@ export default function App() {
   const [result, setResult] = useState({ pages: [], warnings: [] });
   const [rendering, setRendering] = useState(false);
   const [busy, setBusy] = useState(null); // 'pdf'
+  const [pdfDone, setPdfDone] = useState(0); // páginas já colocadas no PDF
   const [panel, setPanel] = useState(null); // 'settings'
   const [draft, setDraft] = useState(''); // código colado na tela inicial; fica ao voltar
   const [dragging, setDragging] = useState(false);
@@ -103,8 +104,8 @@ export default function App() {
   async function downloadPdf() {
     setBusy('pdf');
     try {
-      await new Promise((r) => setTimeout(r, 30));
-      buildPdf(pages).save(pdfFileName());
+      setPdfDone(0);
+      saveFile(await buildPdf(pages, (done) => setPdfDone(done)), pdfFileName());
     } catch (e) {
       showToast('Erro ao gerar o PDF: ' + cleanError(e), true);
     } finally {
@@ -148,6 +149,7 @@ export default function App() {
               pages={pages}
               rendering={rendering}
               busy={busy}
+              pdfDone={pdfDone}
               settings={settings}
               set={set}
               onPrint={() => printWithDialog(pages)}
